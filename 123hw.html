@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>猜數字遊戲</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Microsoft JhengHei", Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 40px;
+        max-width: 400px;
+        width: 100%;
+        text-align: center;
+      }
+
+      h1 {
+        color: #667eea;
+        margin-bottom: 20px;
+        font-size: 2rem;
+      }
+
+      .hint {
+        font-size: 1.1rem;
+        color: #666;
+        margin-bottom: 20px;
+        font-weight: 500;
+      }
+
+      #display {
+        background: #f0f4ff;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        min-height: 60px;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+        border: 2px solid #667eea;
+      }
+
+      .keypad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .key {
+        padding: 20px;
+        font-size: 1.5rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        background: #e0e7ff;
+        color: #333;
+        font-weight: bold;
+        transition: all 0.2s;
+      }
+
+      .key:hover {
+        background: #c7d2fe;
+        transform: scale(1.05);
+      }
+
+      .key:active {
+        transform: scale(0.95);
+      }
+
+      .action-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .action-btn {
+        padding: 15px;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+      }
+
+      .clear-btn {
+        background: #fca5a5;
+        color: white;
+      }
+
+      .clear-btn:hover {
+        background: #f87171;
+        transform: scale(1.05);
+      }
+
+      .submit-btn {
+        background: #34d399;
+        color: white;
+      }
+
+      .submit-btn:hover {
+        background: #10b981;
+        transform: scale(1.05);
+      }
+
+      .restart-btn {
+        width: 100%;
+        padding: 15px;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        background: #667eea;
+        color: white;
+        font-weight: bold;
+        transition: all 0.2s;
+      }
+
+      .restart-btn:hover {
+        background: #5568d3;
+        transform: scale(1.05);
+      }
+
+      .action-btn:active,
+      .restart-btn:active {
+        transform: scale(0.95);
+      }
+
+      .message {
+        margin-top: 15px;
+        font-size: 1.1rem;
+        min-height: 30px;
+        color: #666;
+        font-weight: 500;
+      }
+
+      .message.correct {
+        color: #10b981;
+        font-weight: bold;
+      }
+
+      .message.wrong {
+        color: #ef4444;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>猜數字遊戲</h1>
+
+      <div class="hint" id="hint">猜一個數字(0~100之間)</div>
+
+      <div id="display"></div>
+
+      <div class="keypad">
+        <button class="key" onclick="addNumber(7)">7</button>
+        <button class="key" onclick="addNumber(8)">8</button>
+        <button class="key" onclick="addNumber(9)">9</button>
+        <button class="key" onclick="addNumber(4)">4</button>
+        <button class="key" onclick="addNumber(5)">5</button>
+        <button class="key" onclick="addNumber(6)">6</button>
+        <button class="key" onclick="addNumber(1)">1</button>
+        <button class="key" onclick="addNumber(2)">2</button>
+        <button class="key" onclick="addNumber(3)">3</button>
+        <button class="key" onclick="addNumber(0)" style="grid-column: span 3">
+          0
+        </button>
+      </div>
+
+      <div class="action-buttons">
+        <button class="action-btn clear-btn" onclick="clearDisplay()">C</button>
+        <button class="action-btn submit-btn" onclick="submitGuess()">
+          猜
+        </button>
+      </div>
+
+      <button class="restart-btn" onclick="restartGame()">重新開始</button>
+
+      <div class="message" id="message"></div>
+    </div>
+
+    <script>
+      let targetNumber;
+      let currentInput = "";
+      let gameOver = false;
+      let minRange = 0;
+      let maxRange = 100;
+
+      // 初始化遊戲
+      function initGame() {
+        targetNumber = Math.floor(Math.random() * 100) + 1;
+        currentInput = "";
+        gameOver = false;
+        minRange = 0;
+        maxRange = 100;
+        document.getElementById("display").textContent = "";
+        document.getElementById("hint").textContent = "猜一個數字(0~100之間)";
+        document.getElementById("message").textContent = "";
+        document.getElementById("message").className = "message";
+        console.log("答案是:", targetNumber); // 方便測試
+      }
+
+      // 添加數字到顯示區
+      function addNumber(num) {
+        if (gameOver) return;
+
+        if (currentInput.length < 3) {
+          currentInput += num;
+          document.getElementById("display").textContent = currentInput;
+        }
+      }
+
+      // 清除顯示區
+      function clearDisplay() {
+        currentInput = "";
+        document.getElementById("display").textContent = "";
+      }
+
+      // 提交猜測
+      function submitGuess() {
+        if (gameOver) return;
+
+        const guess = parseInt(currentInput);
+        const messageEl = document.getElementById("message");
+        const hintEl = document.getElementById("hint");
+
+        // 驗證輸入
+        if (currentInput === "" || isNaN(guess)) {
+          messageEl.textContent = "請輸入數字！";
+          messageEl.className = "message wrong";
+          return;
+        }
+
+        if (guess < minRange || guess > maxRange) {
+          messageEl.textContent = `請輸入${minRange}到${maxRange}之間的數字！`;
+          messageEl.className = "message wrong";
+          return;
+        }
+
+        if (guess === targetNumber) {
+          messageEl.textContent = `🎉 恭喜你猜對了！答案是 ${targetNumber}`;
+          messageEl.className = "message correct";
+          gameOver = true;
+        } else {
+          // 更新範圍
+          if (guess > targetNumber) {
+            maxRange = guess;
+          } else {
+            minRange = guess;
+          }
+          hintEl.textContent = `猜一個數字(${minRange}~${maxRange}之間)`;
+          messageEl.textContent = "";
+          clearDisplay();
+        }
+      }
+
+      // 重新開始遊戲
+      function restartGame() {
+        initGame();
+      }
+
+      // 頁面載入時初始化遊戲
+      initGame();
+    </script>
+  </body>
+</html>
